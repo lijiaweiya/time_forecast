@@ -1,7 +1,14 @@
 # Project-file
 datasets/
 *.npy
-
+checkpoints/
+pic/
+results/
+result_long_term_forecast.txt
+result_anomaly_detection.txt
+scripts/augmentation/
+run_anylearn.py
+environment.txt
 
 
 
