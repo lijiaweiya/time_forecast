@@ -1,22 +1,16 @@
-class tt:
-    def __init__(self):
-        self.data = [1, 2, 3, 4]
-        self.index = 0
+import argparse
 
-    def __getitem__(self, item):
-        return self.data[item]
-
-    def __len__(self):
-        return len(self.data)
-
-    def __next__(self):
-        if self.index < len(self.data):
-            result = self.data[self.index]
-            self.index += 1
-            return result
-        raise StopIteration
+from data_provider.data_loader import Dataset_ETT_minute
 
 
+parser = argparse.ArgumentParser(description='TimesNet')
+
+parser.add_argument('--augmentation_ratio', type=int, default=0, help="How many times to augment")
+
+args = parser.parse_args()
 if __name__ == '__main__':
-    te = tt()
-    print(te[0],len(te),[i for i in te])
+
+    dataset=Dataset_ETT_minute(args, 'datasets/ETT-small', flag='train', size=[96,96,1],
+                 features='M', data_path='ETTm1.csv')
+    seq_x, seq_y, seq_x_mark, seq_y_mark=dataset[0]
+    print(seq_x[0],dataset.inverse_transform(seq_x)[0])
