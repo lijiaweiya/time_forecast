@@ -29,6 +29,7 @@ if __name__ == '__main__':
 
     # data loader
     parser.add_argument('--data', type=str, required=True, default='ETTh1', help='dataset type')
+    parser.add_argument('--err',type=bool,default=False,help='add error or not')# 是否添加误差
     parser.add_argument('--root_path', type=str, default='./data/ETT/', help='root path of the data file')
     parser.add_argument('--data_path', type=str, default='ETTh1.csv', help='data file')
     parser.add_argument('--features', type=str, default='M',
