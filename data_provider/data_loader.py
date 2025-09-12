@@ -62,12 +62,16 @@ class Dataset_ETT_hour(Dataset):
         elif self.features == 'S':
             df_data = df_raw[[self.target]]
 
+
+
         if self.scale:
             train_data = df_data[border1s[0]:border2s[0]]
             self.scaler.fit(train_data.values)
             data = self.scaler.transform(df_data.values)
         else:
             data = df_data.values
+
+
 
         df_stamp = df_raw[['date']][border1:border2]
         df_stamp['date'] = pd.to_datetime(df_stamp.date)
@@ -207,8 +211,29 @@ class Dataset_ETT_minute(Dataset):
     def __init__(self, args, root_path, flag='train', size=None,
                  features='M', data_path='ETTm1.csv',
                  target='OT', scale=True, timeenc=0, freq='t', seasonal_patterns=None):
+        """
+        初始化 Dataset_ETT_minute 类。
+
+        参数:
+            args: 包含各种参数和配置的命名空间对象。
+            root_path (str): 数据集文件所在的根目录路径。
+            flag (str, 可选): 指定使用的数据集分割，必须是 ['train', 'test', 'val'] 之一。默认为 'train'。
+            size (list 或 tuple, 可选): 指定 [seq_len, label_len, pred_len] 的列表或元组。如果为 None，则使用默认值。默认为 None。
+            features (str, 可选): 指定使用的特征类型，必须是 ['S', 'M', 'MS'] 之一。默认为 'M'。
+            data_path (str, 可选): 数据集文件的名称。默认为 'ETTm1.csv'。
+            target (str, 可选): 数据集中目标列的名称。默认为 'OT'。
+            scale (bool, 可选): 是否使用 StandardScaler 对数据进行缩放。默认为 True。
+            timeenc (int, 可选): 指定时间编码的类型。0 表示基本时间特征，1 表示高级时间特征。默认为 0。
+            freq (str, 可选): 时间序列数据的频率（例如 't' 表示分钟级数据）。默认为 't'。
+            err (bool, 可选): 一个额外的参数，用于开启误差计算。默认为 True。
+            seasonal_patterns (str, 可选): 指定数据中的季节性模式。默认为 None。
+
+        异常:
+            AssertionError: 如果 `flag` 参数不是 ['train', 'test', 'val'] 之一，则抛出异常。
+        """
         # size [seq_len, label_len, pred_len]
         self.args = args
+        self.err = True
         # info
         if size == None:
             self.seq_len = 24 * 4 * 4
@@ -249,6 +274,16 @@ class Dataset_ETT_minute(Dataset):
         elif self.features == 'S':
             df_data = df_raw[[self.target]]
 
+        # x1,x2=df_data.values[0],df_data.values[1]
+        # print(df_data.values.shape)
+        # print((x2-x1)/x1)
+        # TODO:计算相对误差
+        x_err = np.diff(df_data.values, axis=0)
+        x_err = np.vstack([x_err, np.zeros((1, x_err.shape[1]))])  # 保持与原数据形状一致
+        x_err = x_err # 防止除以零
+        self.x_err = x_err
+
+
         if self.scale:
             train_data = df_data[border1s[0]:border2s[0]]
             self.scaler.fit(train_data.values)
@@ -273,6 +308,9 @@ class Dataset_ETT_minute(Dataset):
         self.data_x = data[border1:border2]
         self.data_y = data[border1:border2]
 
+        self.err_x=self.x_err[border1:border2]
+        self.err_y=self.x_err[border1:border2]
+
         if self.set_type == 0 and self.args.augmentation_ratio > 0:
             self.data_x, self.data_y, augmentation_tags = run_augmentation_single(self.data_x, self.data_y, self.args)
 
@@ -284,8 +322,11 @@ class Dataset_ETT_minute(Dataset):
         r_begin = s_end - self.label_len
         r_end = r_begin + self.label_len + self.pred_len
 
-        seq_x = self.data_x[s_begin:s_end]
-        seq_y = self.data_y[r_begin:r_end]
+        # seq_x = self.data_x[s_begin:s_end]
+        # seq_y = self.data_y[r_begin:r_end]
+        seq_x=self.err_x[s_begin:s_end] if self.err else self.data_x[s_begin:s_end]
+        seq_y=self.err_y[r_begin:r_end] if self.err else self.data_y[r_begin:r_end]
+
         seq_x_mark = self.data_stamp[s_begin:s_end]
         seq_y_mark = self.data_stamp[r_begin:r_end]
 
