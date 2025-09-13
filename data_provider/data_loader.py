@@ -280,9 +280,18 @@ class Dataset_ETT_minute(Dataset):
         # TODO:计算相对误差
         x_err = np.diff(df_data.values, axis=0)
         x_err = np.vstack([x_err, np.zeros((1, x_err.shape[1]))])  # 保持与原数据形状一致
-        x_err = x_err # 防止除以零
-        self.x_err = x_err
-
+        #x_err = np.divide(x_err, df_data.values, out=np.zeros_like(x_err), where=df_data.values != 0)  # 除以当前时间步的特征值
+        print(x_err[0])
+        # self.x_err = x_err
+        # x_min, x_max = x_err.min(), x_err.max()
+        #
+        # percentile_steps = np.percentile(x_err, np.linspace(0, 100, 11))  # 计算数值范围百分比
+        # print(f"x_err 最大值: {x_max}, 最小值: {x_min}")
+        # print(f"x_err 数值范围百分比: {percentile_steps}")
+        # min_pos = np.unravel_index(np.argmin(x_err), x_err.shape)  # 最小值的位置
+        # max_pos = np.unravel_index(np.argmax(x_err), x_err.shape)  # 最大值的位置
+        # print(f"x_err 最大值位置: {max_pos}, 最小值位置: {min_pos}")
+        # exit()
 
         if self.scale:
             train_data = df_data[border1s[0]:border2s[0]]
