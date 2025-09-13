@@ -5,7 +5,7 @@
 
 ## 远程文件路径
 ```bash
-cd /tmp/time_forecast
+cd /home/gf-shu/wsb/time_forecast
 conda activate time
 ```
 
