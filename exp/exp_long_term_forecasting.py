@@ -16,6 +16,7 @@ warnings.filterwarnings('ignore')
 
 
 class Exp_Long_Term_Forecast(Exp_Basic):
+    # 构建模型的基本配置
     def __init__(self, args):
         super(Exp_Long_Term_Forecast, self).__init__(args)
 

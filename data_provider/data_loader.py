@@ -281,8 +281,8 @@ class Dataset_ETT_minute(Dataset):
         x_err = np.diff(df_data.values, axis=0)
         x_err = np.vstack([x_err, np.zeros((1, x_err.shape[1]))])  # 保持与原数据形状一致
         #x_err = np.divide(x_err, df_data.values, out=np.zeros_like(x_err), where=df_data.values != 0)  # 除以当前时间步的特征值
-        print(x_err[0])
-        # self.x_err = x_err
+        # print(x_err[0])
+        self.x_err = x_err
         # x_min, x_max = x_err.min(), x_err.max()
         #
         # percentile_steps = np.percentile(x_err, np.linspace(0, 100, 11))  # 计算数值范围百分比
