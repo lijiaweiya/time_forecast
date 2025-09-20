@@ -210,7 +210,7 @@ class Dataset_ETT_hour(Dataset):
 class Dataset_ETT_minute(Dataset):
     def __init__(self, args, root_path, flag='train', size=None,
                  features='M', data_path='ETTm1.csv',
-                 target='OT', scale=True, timeenc=0, freq='t', seasonal_patterns=None):
+                 target='OT', scale=True, timeenc=0, freq='t',err=False,classification=True, seasonal_patterns=None):
         """
         初始化 Dataset_ETT_minute 类。
 
@@ -233,7 +233,8 @@ class Dataset_ETT_minute(Dataset):
         """
         # size [seq_len, label_len, pred_len]
         self.args = args
-        self.err = True
+        self.err = err
+        self.classification=classification
         # info
         if size == None:
             self.seq_len = 24 * 4 * 4
@@ -278,11 +279,31 @@ class Dataset_ETT_minute(Dataset):
         # print(df_data.values.shape)
         # print((x2-x1)/x1)
         # TODO:计算相对误差
-        x_err = np.diff(df_data.values, axis=0)
-        x_err = np.vstack([x_err, np.zeros((1, x_err.shape[1]))])  # 保持与原数据形状一致
+        # x_err = np.diff(df_data.values, axis=0)
+        # x_err = np.vstack([x_err, np.zeros((1, x_err.shape[1]))])  # 保持与原数据形状一致
+        # self.x_err=x_err
+        # if self.classification:
+            # todo: 分类方式待定
+            # 计算每个时间步的误差值的范数
+            # x_err_norm = np.linalg.norm(x_err, axis=1)
+            # # 将误差范数划分为10类
+            # x_min, x_max = x_err_norm.min(), x_err_norm.max()
+            # bins = np.linspace(x_min, x_max, 11)  # 创建10个区间
+            # bins = np.linspace(x_min,bins[1],10) # 使用更细的区间划分
+            #
+            # # 对每个时间步的误差范数进行分类
+            # x_err_classified = np.digitize(x_err_norm, bins, right=False) - 1
+            # self.label_y = x_err_classified
+            # print("误差分类标签分布", np.unique(self.label_y, return_counts=True))
+            #
+            # print("误差分类标签 shape:", self.label_y.shape)
+            # print("误差分类标签 示例:", self.label_y[:5])
+            # exit()
+
         #x_err = np.divide(x_err, df_data.values, out=np.zeros_like(x_err), where=df_data.values != 0)  # 除以当前时间步的特征值
-        # print(x_err[0])
-        self.x_err = x_err
+
+        #print(x_err[0])
+        # self.x_err = x_err
         # x_min, x_max = x_err.min(), x_err.max()
         #
         # percentile_steps = np.percentile(x_err, np.linspace(0, 100, 11))  # 计算数值范围百分比
@@ -317,13 +338,19 @@ class Dataset_ETT_minute(Dataset):
         self.data_x = data[border1:border2]
         self.data_y = data[border1:border2]
 
-        self.err_x=self.x_err[border1:border2]
-        self.err_y=self.x_err[border1:border2]
+        # self.err_x=self.x_err[border1:border2]
+        # self.err_y=self.x_err[border1:border2]
 
         if self.set_type == 0 and self.args.augmentation_ratio > 0:
             self.data_x, self.data_y, augmentation_tags = run_augmentation_single(self.data_x, self.data_y, self.args)
 
         self.data_stamp = data_stamp
+        # x_all=[]
+        # for i in range(self.__len__()):
+        #     x_all.append(self.__getitem__(i)[0])
+        # print(np.shape(x_all))
+        # exit()
+
 
     def __getitem__(self, index):
         s_begin = index
@@ -331,13 +358,22 @@ class Dataset_ETT_minute(Dataset):
         r_begin = s_end - self.label_len
         r_end = r_begin + self.label_len + self.pred_len
 
-        # seq_x = self.data_x[s_begin:s_end]
-        # seq_y = self.data_y[r_begin:r_end]
-        seq_x=self.err_x[s_begin:s_end] if self.err else self.data_x[s_begin:s_end]
-        seq_y=self.err_y[r_begin:r_end] if self.err else self.data_y[r_begin:r_end]
+        seq_x = self.data_x[s_begin:s_end]
+        seq_y = self.data_y[r_begin:r_end]
+        # seq_x=self.err_x[s_begin:s_end] if self.err else self.data_x[s_begin:s_end]
+        # seq_y=self.err_y[r_begin:r_end] if self.err else self.data_y[r_begin:r_end]
 
         seq_x_mark = self.data_stamp[s_begin:s_end]
         seq_y_mark = self.data_stamp[r_begin:r_end]
+
+        # 分类任务则返回标签代替seq_y
+        # if self.classification:
+        #     seq_y = self.label_y[s_end+1]
+        #     seq_y_mark=self.label_y[s_begin:s_end]
+        #     # print("seq_x shape:", seq_x.shape)
+        #     # print("seq_y (labels):", seq_y)
+        #     # print("seq_y_mark (labels):", seq_y_mark)
+        #     # exit()
 
         return seq_x, seq_y, seq_x_mark, seq_y_mark
 
@@ -440,6 +476,7 @@ class Dataset_Custom(Dataset):
         seq_y = self.data_y[r_begin:r_end]
         seq_x_mark = self.data_stamp[s_begin:s_end]
         seq_y_mark = self.data_stamp[r_begin:r_end]
+
 
         return seq_x, seq_y, seq_x_mark, seq_y_mark
 
