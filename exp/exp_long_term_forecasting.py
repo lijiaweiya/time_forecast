@@ -134,6 +134,13 @@ class Exp_Long_Term_Forecast(Exp_Basic):
                     # outputs = outputs[:, -self.args.pred_len:, f_dim:]
                     # batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
 
+                    # print(outputs)
+                    #
+                    # print(batch_y)
+                    # print("$$$$$$$$$$$$$$$$$$$$$$$$")
+                    # print(outputs.shape)
+                    # print(batch_y.shape)
+                    # exit()
                     loss = criterion(outputs, batch_y.long())
                     train_loss.append(loss.item())
 
@@ -206,7 +213,17 @@ class Exp_Long_Term_Forecast(Exp_Basic):
                 preds += outputs.argmax(dim=1).cpu().numpy().tolist()
                 trues += batch_y.long().cpu().numpy().tolist()
             from sklearn.metrics import classification_report
+            import json
+            timestamp = int(time.time())
+            result = {
+                "config": {k: v for k, v in vars(self.args).items() if k != "device"},
+                "info":{"lie":self.args.ll,"cluster":self.args.cluster},
+                "report": classification_report(y_true=trues, y_pred=preds, digits=4, output_dict=True)
+            }
+            with open(f"{folder_path}{timestamp}.json", "w", encoding="utf-8") as f:
+                json.dump(result, f, ensure_ascii=False, indent=4)
             print(classification_report(y_true=trues, y_pred=preds, digits=4))
+
 
 
 

@@ -14,7 +14,8 @@ batch_size=16
 python -u run.py \
   --err True \
   --task_name long_term_forecast \
-  --train_epochs 10 \
+  --train_epochs 100 \
+  --clusterss 10 \
   --is_training 1 \
   --root_path  ./datasets/ETT-small/\
   --data_path ETTm1.csv \
