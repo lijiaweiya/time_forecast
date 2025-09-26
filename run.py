@@ -28,7 +28,10 @@ if __name__ == '__main__':
                         help='model name, options: [Autoformer, Transformer, TimesNet]')
 
     # data loader
+    parser.add_argument('--cluster',type=int,required=True,default=5,help='whether to do clustering analysis')
+    parser.add_argument('--ll', type=int, default=1, help='取第几列特征进行聚类')
     parser.add_argument('--data', type=str, required=True, default='ETTh1', help='dataset type')
+    parser.add_argument('--scale',type=bool,default=False,help='add error or not')# 是否添加误差
     parser.add_argument('--err',type=bool,default=False,help='add error or not')# 是否添加误差
     parser.add_argument('--root_path', type=str, default='./data/ETT/', help='root path of the data file')
     parser.add_argument('--data_path', type=str, default='ETTh1.csv', help='data file')
@@ -203,6 +206,7 @@ if __name__ == '__main__':
             exp.train(setting)
 
             print('>>>>>>>testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
+            print('>>>>>>>cluster : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(args.cluster))
             exp.test(setting)
             if args.gpu_type == 'mps':
                 torch.backends.mps.empty_cache()

@@ -41,19 +41,15 @@ if __name__ == '__main__':
         x_all.append(dataset_train.geti(i)[0])
     x_all = np.array(x_all)
     X = x_all
-    print(X.shape)
-    # for i in range(6):
-    #     # 取出第2列（索引为1）
-    #     X_second_column = X[:, :, i]  # 这将得到形状为 (69537, 96) 的数组
-    X_second_column = X[:, :, 6]
-    # 如果您需要保持三维结构，可以这样做：
-    X_second_column = X[:, :, 6:7]  # 这将得到形状为 (69537, 96, 1) 的数组
-    print(X_second_column.shape)
-    results = main_clustering_analysis(X_second_column, algorithm='kmeans', use_dtw=False, reduction='pca',
-                                       plot_curves=True)
-    # results,results_lab = main_clustering_analysis(X, algorithm='all', use_dtw=False,reduction='tsne')
-    # results= main_clustering_analysis(X, algorithm='hdbscan', use_dtw=False,reduction='pca', plot_curves=True)
+    for i in range(6):
+        # 取出第2列（索引为1）
+        X_second_column = X[:, :, i]  # 这将得到形状为 (69537, 96) 的数组
 
+        # 如果您需要保持三维结构，可以这样做：
+        X_second_column = X[:, :, i:i + 1]  # 这将得到形状为 (69537, 96, 1) 的数组
+        print(X_second_column.shape)
+        results = main_clustering_analysis(X_second_column, algorithm='hdbscan', use_dtw=False, reduction='pca',
+                                           plot_curves=True)
 
     # import numpy as np
     # from tslearn.clustering import KShape

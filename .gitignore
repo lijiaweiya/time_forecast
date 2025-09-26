@@ -1,11 +1,13 @@
 # Project-file
 datasets/
 *.npy
+*.json
 checkpoints/
 pic/
 results/
 result_long_term_forecast.txt
 result_anomaly_detection.txt
+test_results/
 scripts/augmentation/
 run_anylearn.py
 environment.txt

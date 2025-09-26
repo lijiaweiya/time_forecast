@@ -209,9 +209,10 @@ class Dataset_ETT_hour(Dataset):
 class Dataset_ETT_minute(Dataset):
     def __init__(self, args, root_path, flag='train', size=None,
                  features='M', data_path='ETTm1.csv',
-                 target='OT', scale=True, timeenc=0, freq='t', err=False, classification=True,ll=1, seasonal_patterns=None):
+                 target='OT', scale=True, timeenc=0, freq='t', err=False, classification=True, seasonal_patterns=None):
         """
         初始化 Dataset_ETT_minute 类。
+
         参数:
             args: 包含各种参数和配置的命名空间对象。
             root_path (str): 数据集文件所在的根目录路径。
@@ -230,7 +231,6 @@ class Dataset_ETT_minute(Dataset):
             AssertionError: 如果 `flag` 参数不是 ['train', 'test', 'val'] 之一，则抛出异常。
         """
         # size [seq_len, label_len, pred_len]
-        self.ll =ll
         self.args = args
         self.err = err
         self.classification = classification
@@ -314,6 +314,7 @@ class Dataset_ETT_minute(Dataset):
         # exit()
 
         if self.scale:
+            print("*****************************************************************")
             train_data = df_data[border1s[0]:border2s[0]]
             self.scaler.fit(train_data.values)  # fit方法计算数据的均值和标准差，并存储在 scaler对象中。
             data = self.scaler.transform(df_data.values)
@@ -348,8 +349,7 @@ class Dataset_ETT_minute(Dataset):
         x_all = []
         for i in range(self.le()):
             x_all.append(self.geti(i)[0])
-        x_all = np.array(x_all)[:,:,self.ll:self.ll+1]  # 只使用第7个特征进行聚类
-
+        x_all = np.array(x_all)
 
         X = reshape_time_series_data(x_all)
 
@@ -357,7 +357,7 @@ class Dataset_ETT_minute(Dataset):
         # self.cluster = HDBSCAN(min_cluster_size=100, min_samples=100)
         import joblib
         cluster_path = "datasets/ETT-small/cluster"
-        model_path = os.path.join(cluster_path, f"kmeans_model_{self.ll}_{self.args.cluster}.pkl")
+        model_path = os.path.join(cluster_path, f"kmeans_model_{self.args.cluster}.pkl")
         # model_path = os.path.join(cluster_path, f"HDBSCAN_{self.args.cluster}.pkl")
 
         if os.path.exists(model_path):
@@ -366,8 +366,6 @@ class Dataset_ETT_minute(Dataset):
             self.cluster = KMeans(n_clusters=self.args.cluster, random_state=2001, n_init=10)
             print("聚类中",model_path)
             self.cluster.fit(X)
-            if not os.path.exists(cluster_path):
-                os.makedirs(cluster_path)
             joblib.dump(self.cluster, model_path)
 
         # dataset = Dataset_ETT_minute(self.args, './datasets/ETT-small')
@@ -415,7 +413,7 @@ class Dataset_ETT_minute(Dataset):
         r_begin = s_end - self.label_len
         r_end = r_begin + self.label_len + self.pred_len
 
-        seq_x = self.data[s_begin:s_end]
+        seq_x = self.data[s_begin:s_end][:,:,6:7]
 
         seq_x_mark = self.data_stamp[s_begin:s_end]
         seq_y_mark = self.data_stamp[r_begin:r_end]
@@ -428,7 +426,7 @@ class Dataset_ETT_minute(Dataset):
         r_begin = s_end - self.label_len
         r_end = r_begin + self.label_len + self.pred_len
 
-        seq_x = self.data_x[s_begin:s_end]
+        seq_x = self.data_x[s_begin:s_end][:,:,6:7]  # 只使用第7个特征进行聚类
         seq_y = self.data_y[r_begin:r_end]
         # seq_x=self.err_x[s_begin:s_end] if self.err else self.data_x[s_begin:s_end]
         # seq_y=self.err_y[r_begin:r_end] if self.err else self.data_y[r_begin:r_end]
@@ -438,7 +436,7 @@ class Dataset_ETT_minute(Dataset):
 
         # 分类任务则返回标签代替seq_y
         if self.classification:
-            seq_y = self.cluster.predict(reshape_time_series_data(np.array([seq_x[:,self.ll:self.ll+1]]))).squeeze()
+            seq_y = self.cluster.predict(reshape_time_series_data(np.array([seq_x]))).squeeze()
         #     seq_y = self.label_y[s_end+1]
         #     seq_y_mark=self.label_y[s_begin:s_end]
         #     # print("seq_x shape:", seq_x.shape)
@@ -446,7 +444,7 @@ class Dataset_ETT_minute(Dataset):
         #     # print("seq_y_mark (labels):", seq_y_mark)
         #     # exit()
 
-        return seq_x[:,self.ll:self.ll+1], seq_y, seq_x_mark, seq_y_mark
+        return seq_x, seq_y, seq_x_mark, seq_y_mark
 
     def le(self):
         return len(self.data) - self.seq_len - self.pred_len + 1

@@ -66,6 +66,8 @@ def data_provider(args, flag):
             drop_last = False
         data_set = Data(
             args = args,
+            scale=args.scale,
+            ll=args.ll,
             root_path=args.root_path,
             data_path=args.data_path,
             flag=flag,
