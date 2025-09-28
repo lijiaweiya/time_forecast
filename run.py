@@ -27,6 +27,8 @@ if __name__ == '__main__':
     parser.add_argument('--model', type=str, required=True, default='Autoformer',
                         help='model name, options: [Autoformer, Transformer, TimesNet]')
 
+    parser.add_argument('--save_mode',type=bool,default=False, help='是否保存模式和模型')
+
     # data loader
     parser.add_argument('--cluster',type=int,required=True,default=5,help='whether to do clustering analysis')
     parser.add_argument('--ll', type=int, default=1, help='取第几列特征进行聚类')
