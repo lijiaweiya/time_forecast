@@ -187,6 +187,7 @@ class Exp_Long_Term_Forecast(Exp_Basic):
 
         preds = []
         trues = []
+        xs = []  # 新增：记录所有batch_x
         folder_path = './test_results/' + setting + '/'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
@@ -212,20 +213,50 @@ class Exp_Long_Term_Forecast(Exp_Basic):
                     outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
                 preds += outputs.argmax(dim=1).cpu().numpy().tolist()
                 trues += batch_y.long().cpu().numpy().tolist()
+                xs.append(batch_x.cpu().numpy())  # 新增：收集x
             from sklearn.metrics import classification_report
             import json
             timestamp = int(time.time())
             result = {
                 "config": {k: v for k, v in vars(self.args).items() if k != "device"},
-                "info":{"lie":self.args.ll,"cluster":self.args.cluster},
+                "info": {"lie": self.args.ll, "cluster": self.args.cluster},
                 "report": classification_report(y_true=trues, y_pred=preds, digits=4, output_dict=True)
             }
             with open(f"{folder_path}{timestamp}.json", "w", encoding="utf-8") as f:
                 json.dump(result, f, ensure_ascii=False, indent=4)
             print(classification_report(y_true=trues, y_pred=preds, digits=4))
 
-
-
+            if self.args.save_mode:
+                # 新增：统计分类最优类别的预测正确样本的x，求平均后保存为npy
+                report = result["report"]
+                # 找到f1-score最大的类别（排除accuracy/macro avg/weighted avg）
+                best_cls = None
+                best_f1 = -1
+                for k, v in report.items():
+                    if k in ["accuracy", "macro avg", "weighted avg"]:
+                        continue
+                    if isinstance(v, dict) and v.get("f1-score", 0) > best_f1:
+                        best_f1 = v["f1-score"]
+                        best_cls = k
+                if best_cls is not None:
+                    xs_all = np.concatenate(xs, axis=0)  # shape: [N, ...]
+                    preds_arr = np.array(preds)
+                    trues_arr = np.array(trues)
+                    best_cls_int = int(best_cls)
+                    mask = (preds_arr == best_cls_int) & (trues_arr == best_cls_int)
+                    if np.any(mask):
+                        print(len(xs),len(xs[0]))
+                        print(np.array(xs_all).shape)
+                        mode_x = xs_all[mask].mean(axis=0)
+                        print(np.array(mode_x).shape)
+                        out_name = f"lie{self.args.ll}_class{self.args.cluster}_best{best_cls}.npy"
+                        out_dir = os.path.join("test_results", "mode")
+                        os.makedirs(out_dir, exist_ok=True)
+                        out_path = os.path.join(out_dir, out_name)
+                        np.save(out_path, mode_x)
+                        print(f"Best class mode saved: {out_path}, shape: {mode_x.shape}")
+                    else:
+                        print(f"No correct prediction for best class {best_cls}")
 
         #         f_dim = -1 if self.args.features == 'MS' else 0
         #         outputs = outputs[:, -self.args.pred_len:, :]
