@@ -3,7 +3,7 @@ import argparse
 import numpy as np
 from torch.utils.data import DataLoader
 
-from data_provider.data_loader_cluser import Dataset_ETT_minute
+from data_provider.data_loader import Dataset_ETT_minute
 from cluster_test import main_clustering_analysis
 
 parser = argparse.ArgumentParser(description='TimesNet')
